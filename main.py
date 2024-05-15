@@ -2,7 +2,6 @@ from typing import Union
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import FileResponse
 # Importing necessary modules required 
-from playsound import playsound 
 import speech_recognition as sr 
 from googletrans import Translator 
 from translate import Translator
