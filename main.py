@@ -1,5 +1,6 @@
 from typing import Union
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import FileResponse
 # Importing necessary modules required 
 from playsound import playsound 
 import speech_recognition as sr 
@@ -15,13 +16,23 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/translate-audio")
-def get_translate():
+@app.post("/translate-audio")
+def get_translate(file: UploadFile = File(...)):
     flag = 0
+
+    try:
+        contents = file.file.read()
+        with open(file.filename, 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+    finally:
+        file.file.close()
     
     r = sr.Recognizer() 
 
-    file_path = "sample-1.wav"
+    # file_path = "sample-1.wav"
+    file_path = file.filename
     text = convert_audio_to_text(file_path)
 
     # invoking Translator 
@@ -30,9 +41,16 @@ def get_translate():
 
     speak = gTTS(text=text_to_translate, lang="ta")
 
-    speak.save("captured_voice.mp3") 
+    # saving the translated file
+    translated_file_name = "captured_voice.mp3"
 
-    return text_to_translate
+    speak.save(translated_file_name) 
+
+    if not os.path.exists(translated_file_name):
+        return {"error": "Translated file not found"}
+
+    # Return the file for download
+    return FileResponse(translated_file_name, filename=translated_file_name, media_type='application/octet-stream')
     
 def convert_audio_to_text(audio_file_path):
     recognizer = sr.Recognizer()
